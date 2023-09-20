@@ -1,7 +1,7 @@
 use ockam_core::Result;
 use ockam_identity::models::SchemaId;
 use ockam_identity::utils::AttributesBuilder;
-use ockam_identity::{identities, Purpose, MAX_CREDENTIAL_VALIDITY};
+use ockam_identity::{identities, MAX_CREDENTIAL_VALIDITY};
 
 #[tokio::test]
 async fn identity() -> Result<()> {
@@ -26,8 +26,8 @@ async fn sc_purpose_key() -> Result<()> {
 
     let purpose_key = identities
         .purpose_keys()
-        .purpose_keys_creation()
-        .create_purpose_key(identity.identifier(), Purpose::SecureChannel)
+        .secure_channel_purpose_keys_creation()
+        .create_purpose_key(identity.identifier())
         .await?;
 
     let purpose_key = minicbor::to_vec(purpose_key.attestation())?;
