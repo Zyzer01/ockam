@@ -1,43 +1,36 @@
-use ockam_vault::{KeyId, PublicKey, SecretType};
-
-use crate::{Identifier, Purpose, TimestampInSeconds};
+use crate::{Identifier, TimestampInSeconds};
+use ockam_vault::{X25519PublicKey, X25519SecretKeyHandle};
 
 #[derive(Clone)]
 /// PurposeKey key.
-pub enum PurposeKeyKey {
+pub enum SecureChannelPurposeKeyKey {
     /// We have access to the PurposeKey secret to key to then use it
-    Secret(KeyId),
+    Secret(X25519SecretKeyHandle),
     /// Only Public Key accessible, we can still attest such PurposeKey, but won't be able to use it.
     /// The calling side may use corresponding secret key though.
-    Public(PublicKey),
+    Public(X25519PublicKey),
 }
 
 /// Options to create a Purpose Key
 #[derive(Clone)]
-pub struct PurposeKeyOptions {
+pub struct SecureChannelPurposeKeyOptions {
     pub(super) identifier: Identifier,
-    pub(super) purpose: Purpose,
-    pub(super) key: PurposeKeyKey,
-    pub(super) stype: SecretType,
+    pub(super) key: SecureChannelPurposeKeyKey,
     pub(super) created_at: TimestampInSeconds,
     pub(super) expires_at: TimestampInSeconds,
 }
 
-impl PurposeKeyOptions {
+impl SecureChannelPurposeKeyOptions {
     /// Constructor
     pub fn new(
         identifier: Identifier,
-        purpose: Purpose,
-        key: PurposeKeyKey,
-        stype: SecretType,
+        key: SecureChannelPurposeKeyKey,
         created_at: TimestampInSeconds,
         expires_at: TimestampInSeconds,
     ) -> Self {
         Self {
             identifier,
-            purpose,
             key,
-            stype,
             created_at,
             expires_at,
         }
@@ -48,19 +41,9 @@ impl PurposeKeyOptions {
         &self.identifier
     }
 
-    /// [`Purpose`]
-    pub fn purpose(&self) -> Purpose {
-        self.purpose
-    }
-
     /// Key
-    pub fn key(&self) -> &PurposeKeyKey {
+    pub fn key(&self) -> &SecureChannelPurposeKeyKey {
         &self.key
-    }
-
-    /// Secret key type
-    pub fn stype(&self) -> SecretType {
-        self.stype
     }
 
     /// Creation timestamp

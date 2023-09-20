@@ -27,7 +27,6 @@ compile_error!(r#"The "no_std" feature currently requires the "alloc" feature"#)
 extern crate core;
 
 #[cfg(feature = "alloc")]
-#[macro_use]
 extern crate alloc;
 
 /// Storage
@@ -46,8 +45,18 @@ mod software;
 /// Main vault types: PublicKey, Secret, SecretAttributes etc...
 mod types;
 
-pub use constants;
+use cfg_if::cfg_if;
 pub use error::*;
 pub use software::*;
 pub use traits::*;
 pub use types::*;
+
+// TODO: feature set compatibility check
+cfg_if! {
+    if #[cfg(any(not(feature = "disable_default_noise_protocol"), feature = "OCKAM_XX_25519_AES256_GCM_SHA256"))] {}
+    else if #[cfg(feature = "OCKAM_XX_25519_ChaChaPolyBLAKE2s")] { }
+    else if #[cfg(feature = "OCKAM_XX_25519_AES128_GCM_SHA256")] { }
+    else {
+        compile_error!{"NOISE protocol name not selected, please enable on of the following features: \"OCKAM_XX_25519_ChaChaPolyBLAKE2s\", \"OCKAM_XX_25519_AES128_GCM_SHA256\", \"OCKAM_XX_25519_AES256_GCM_SHA256\""}
+    }
+}

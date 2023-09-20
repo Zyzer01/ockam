@@ -1,15 +1,13 @@
-mod purpose_key_builder;
-mod purpose_key_options;
+mod credential;
 #[allow(clippy::module_inception)]
 mod purpose_keys;
-mod purpose_keys_creation;
 mod purpose_keys_verification;
+mod secure_channel;
 
-pub use purpose_key_builder::*;
-pub use purpose_key_options::*;
+pub use credential::*;
 pub use purpose_keys::*;
-pub use purpose_keys_creation::*;
 pub use purpose_keys_verification::*;
+pub use secure_channel::*;
 
 /// Purpose Keys storage functions
 pub mod storage;
