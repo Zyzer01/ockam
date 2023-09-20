@@ -1,11 +1,12 @@
 use ockam_core::compat::vec::Vec;
 
-use crate::models::{
-    ChangeHash, Ed25519PublicKey, Ed25519Signature, Identifier, P256ECDSAPublicKey,
-    P256ECDSASignature, TimestampInSeconds, X25519PublicKey,
-};
+use crate::models::{ChangeHash, Identifier, TimestampInSeconds};
 
 use minicbor::{Decode, Encode};
+use ockam_vault::{
+    ECDSASHA256CurveP256PublicKey, ECDSASHA256CurveP256Signature, EdDSACurve25519PublicKey,
+    EdDSACurve25519Signature, X25519PublicKey,
+};
 
 /// Self-signed Attestation of an [`super::super::identity::Identity`] associating
 /// a [`super::super::purpose_key::PurposeKey`] with itself
@@ -26,9 +27,9 @@ pub struct PurposeKeyAttestation {
 #[rustfmt::skip]
 pub enum PurposeKeyAttestationSignature {
     /// Signature using EdDSA Ed25519 key from the corresponding [`super::super::identity::Identity`]
-    #[n(1)] Ed25519Signature(#[n(0)] Ed25519Signature),
+    #[n(1)] Ed25519Signature(#[n(0)] EdDSACurve25519Signature),
     /// Signature using ECDSA P256 key from the corresponding [`super::super::identity::Identity`]
-    #[n(2)] P256ECDSASignature(#[n(0)] P256ECDSASignature),
+    #[n(2)] P256ECDSASignature(#[n(0)] ECDSASHA256CurveP256Signature),
 }
 
 /// Data inside a [`PurposeKeyAttestation`]
@@ -65,7 +66,7 @@ pub enum PurposePublicKey {
 #[rustfmt::skip]
 pub enum CredentialSigningKey {
     /// EdDSA Ed25519 Public Key
-    #[n(1)] Ed25519PublicKey(#[n(0)] Ed25519PublicKey),
+    #[n(1)] Ed25519PublicKey(#[n(0)] EdDSACurve25519PublicKey),
     /// ECDSA P256 Public Key
-    #[n(2)] P256ECDSAPublicKey(#[n(0)] P256ECDSAPublicKey),
+    #[n(2)] P256ECDSAPublicKey(#[n(0)] ECDSASHA256CurveP256PublicKey),
 }

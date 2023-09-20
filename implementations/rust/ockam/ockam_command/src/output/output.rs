@@ -8,9 +8,8 @@ use miette::miette;
 use miette::IntoDiagnostic;
 use minicbor::Encode;
 use ockam::identity::models::{
-    CredentialAndPurposeKey, CredentialData, CredentialSigningKey, Ed25519PublicKey,
-    P256ECDSAPublicKey, PurposeKeyAttestation, PurposeKeyAttestationData, PurposePublicKey,
-    X25519PublicKey,
+    CredentialAndPurposeKey, CredentialData, CredentialSigningKey, PurposeKeyAttestation,
+    PurposeKeyAttestationData, PurposePublicKey,
 };
 use ockam::identity::{Credential, Identifier, Identity, TimestampInSeconds};
 use serde::{Serialize, Serializer};
@@ -24,6 +23,9 @@ use ockam_api::nodes::models::secure_channel::{
 };
 use ockam_api::route_to_multiaddr;
 use ockam_core::{route, Route};
+use ockam_vault::{
+    ECDSASHA256CurveP256PublicKey, EdDSACurve25519PublicKey, VerifyingPublicKey, X25519PublicKey,
+};
 
 use crate::terminal::OckamColor;
 use crate::util::comma_separated;
@@ -433,7 +435,7 @@ impl fmt::Display for X25519PublicKeyDisplay {
     }
 }
 
-pub struct Ed25519PublicKeyDisplay(pub Ed25519PublicKey);
+pub struct Ed25519PublicKeyDisplay(pub EdDSACurve25519PublicKey);
 
 impl fmt::Display for Ed25519PublicKeyDisplay {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
@@ -441,7 +443,7 @@ impl fmt::Display for Ed25519PublicKeyDisplay {
     }
 }
 
-pub struct P256PublicKeyDisplay(pub P256ECDSAPublicKey);
+pub struct P256PublicKeyDisplay(pub ECDSASHA256CurveP256PublicKey);
 
 impl fmt::Display for P256PublicKeyDisplay {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
@@ -660,6 +662,21 @@ impl Serialize for IdentityDisplay {
     }
 }
 
+pub struct VerifyingPublicKeyDisplay(pub VerifyingPublicKey);
+
+impl fmt::Display for VerifyingPublicKeyDisplay {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        match &self.0 {
+            VerifyingPublicKey::EdDSACurve25519(value) => {
+                write!(f, "EdDSACurve25519: {}", hex::encode(value.0))
+            }
+            VerifyingPublicKey::ECDSASHA256CurveP256(value) => {
+                write!(f, "ECDSASHA256CurveP256: {}", hex::encode(value.0))
+            }
+        }
+    }
+}
+
 impl fmt::Display for IdentityDisplay {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         writeln!(f, "Identifier: {}", self.0.identifier())?;
@@ -673,7 +690,7 @@ impl fmt::Display for IdentityDisplay {
             writeln!(
                 f,
                 "    primary_public_key:      {}",
-                change.primary_public_key()
+                VerifyingPublicKeyDisplay(change.primary_public_key().clone())
             )?;
             writeln!(
                 f,

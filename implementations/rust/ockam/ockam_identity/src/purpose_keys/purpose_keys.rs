@@ -2,7 +2,8 @@ use ockam_core::compat::sync::Arc;
 
 use crate::purpose_keys::storage::PurposeKeysRepository;
 use crate::{
-    IdentitiesKeys, IdentitiesReader, PurposeKeysCreation, PurposeKeysVerification, Vault,
+    CredentialPurposeKeysCreation, IdentitiesKeys, IdentitiesReader, PurposeKeysVerification,
+    SecureChannelPurposeKeysCreation, Vault,
 };
 
 /// This struct supports all the services related to identities
@@ -36,8 +37,18 @@ impl PurposeKeys {
     }
 
     /// Create [`PurposeKeysCreation`]
-    pub fn purpose_keys_creation(&self) -> Arc<PurposeKeysCreation> {
-        Arc::new(PurposeKeysCreation::new(
+    pub fn credential_purpose_keys_creation(&self) -> Arc<CredentialPurposeKeysCreation> {
+        Arc::new(CredentialPurposeKeysCreation::new(
+            self.vault.clone(),
+            self.identities_reader.clone(),
+            self.identity_keys.clone(),
+            self.repository.clone(),
+        ))
+    }
+
+    /// Create [`PurposeKeysCreation`]
+    pub fn secure_channel_purpose_keys_creation(&self) -> Arc<SecureChannelPurposeKeysCreation> {
+        Arc::new(SecureChannelPurposeKeysCreation::new(
             self.vault.clone(),
             self.identities_reader.clone(),
             self.identity_keys.clone(),
@@ -67,12 +78,12 @@ mod tests {
 
         let identity = identities_creation.create_identity().await?;
         let credentials_key = purpose_keys
-            .purpose_keys_creation()
-            .create_purpose_key(identity.identifier(), Purpose::Credentials)
+            .credential_purpose_keys_creation()
+            .create_purpose_key(identity.identifier())
             .await?;
         let secure_channel_key = purpose_keys
-            .purpose_keys_creation()
-            .create_purpose_key(identity.identifier(), Purpose::SecureChannel)
+            .secure_channel_purpose_keys_creation()
+            .create_purpose_key(identity.identifier())
             .await?;
 
         let credentials_key = purpose_keys
@@ -105,8 +116,8 @@ mod tests {
         let identity = identities_creation.create_identity().await?;
 
         let credentials_key = purpose_keys
-            .purpose_keys_creation()
-            .create_purpose_key(identity.identifier(), Purpose::Credentials)
+            .credential_purpose_keys_creation()
+            .create_purpose_key(identity.identifier())
             .await?;
 
         assert!(purpose_keys
@@ -121,8 +132,8 @@ mod tests {
             .is_none());
 
         let secure_channel_key = purpose_keys
-            .purpose_keys_creation()
-            .create_purpose_key(identity.identifier(), Purpose::SecureChannel)
+            .secure_channel_purpose_keys_creation()
+            .create_purpose_key(identity.identifier())
             .await?;
 
         let key = purpose_keys
@@ -150,8 +161,8 @@ mod tests {
         assert_eq!(&key, secure_channel_key.attestation());
 
         let credentials_key2 = purpose_keys
-            .purpose_keys_creation()
-            .create_purpose_key(identity.identifier(), Purpose::Credentials)
+            .credential_purpose_keys_creation()
+            .create_purpose_key(identity.identifier())
             .await?;
 
         let key = purpose_keys

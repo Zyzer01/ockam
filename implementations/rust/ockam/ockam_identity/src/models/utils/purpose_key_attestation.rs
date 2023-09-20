@@ -1,12 +1,11 @@
 use crate::models::utils::get_versioned_data;
 use crate::models::{
-    CredentialSigningKey, Ed25519Signature, P256ECDSASignature, PurposeKeyAttestation,
-    PurposeKeyAttestationData, PurposeKeyAttestationSignature, VersionedData,
+    CredentialSigningKey, PurposeKeyAttestation, PurposeKeyAttestationData,
+    PurposeKeyAttestationSignature, VersionedData,
 };
-use crate::IdentityError;
 
-use ockam_core::{Error, Result};
-use ockam_vault::{PublicKey, SecretType, Signature};
+use ockam_core::Result;
+use ockam_vault::{Signature, VerifyingPublicKey};
 
 impl PurposeKeyAttestation {
     /// Extract [`VersionedData`]
@@ -25,56 +24,37 @@ impl PurposeKeyAttestationData {
 impl From<PurposeKeyAttestationSignature> for Signature {
     fn from(value: PurposeKeyAttestationSignature) -> Self {
         match value {
-            PurposeKeyAttestationSignature::Ed25519Signature(value) => Self::new(value.0.to_vec()),
+            PurposeKeyAttestationSignature::Ed25519Signature(value) => Self::EdDSACurve25519(value),
             PurposeKeyAttestationSignature::P256ECDSASignature(value) => {
-                Self::new(value.0.to_vec())
+                Self::ECDSASHA256CurveP256(value)
             }
         }
     }
 }
 
-impl PurposeKeyAttestationSignature {
-    /// Try to create a [`PurposeKeyAttestationSignature`] using a binary [`Signature`] and its type
-    pub fn try_from_signature(signature: Signature, stype: SecretType) -> Result<Self> {
-        match stype {
-            SecretType::Ed25519 => Ok(Self::Ed25519Signature(Ed25519Signature(
-                signature
-                    .as_ref()
-                    .try_into()
-                    .map_err(|_| IdentityError::InvalidSignatureData)?,
-            ))),
-            SecretType::NistP256 => Ok(Self::P256ECDSASignature(P256ECDSASignature(
-                signature
-                    .as_ref()
-                    .try_into()
-                    .map_err(|_| IdentityError::InvalidSignatureData)?,
-            ))),
-
-            SecretType::Buffer | SecretType::Aes | SecretType::X25519 => {
-                Err(IdentityError::InvalidKeyType.into())
-            }
+impl From<Signature> for PurposeKeyAttestationSignature {
+    fn from(value: Signature) -> Self {
+        match value {
+            Signature::EdDSACurve25519(value) => Self::Ed25519Signature(value),
+            Signature::ECDSASHA256CurveP256(value) => Self::P256ECDSASignature(value),
         }
     }
 }
 
-impl From<CredentialSigningKey> for PublicKey {
+impl From<CredentialSigningKey> for VerifyingPublicKey {
     fn from(value: CredentialSigningKey) -> Self {
         match value {
-            CredentialSigningKey::Ed25519PublicKey(key) => key.into(),
-            CredentialSigningKey::P256ECDSAPublicKey(key) => key.into(),
+            CredentialSigningKey::Ed25519PublicKey(value) => Self::EdDSACurve25519(value),
+            CredentialSigningKey::P256ECDSAPublicKey(value) => Self::ECDSASHA256CurveP256(value),
         }
     }
 }
 
-impl TryFrom<PublicKey> for CredentialSigningKey {
-    type Error = Error;
-
-    fn try_from(value: PublicKey) -> Result<Self> {
-        match value.stype() {
-            SecretType::Ed25519 => Ok(Self::Ed25519PublicKey(value.try_into()?)),
-            SecretType::NistP256 => Ok(Self::P256ECDSAPublicKey(value.try_into()?)),
-
-            _ => Err(IdentityError::InvalidKeyType.into()),
+impl From<VerifyingPublicKey> for CredentialSigningKey {
+    fn from(value: VerifyingPublicKey) -> Self {
+        match value {
+            VerifyingPublicKey::EdDSACurve25519(value) => Self::Ed25519PublicKey(value),
+            VerifyingPublicKey::ECDSASHA256CurveP256(value) => Self::P256ECDSAPublicKey(value),
         }
     }
 }

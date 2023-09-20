@@ -2,7 +2,7 @@ use crate::common::crazy_vault::{CrazySigningVault, CrazyVerifyingVault};
 
 use ockam_core::compat::sync::Arc;
 use ockam_core::Result;
-use ockam_identity::{identities, Identities, Purpose, Vault};
+use ockam_identity::{identities, Identities, Vault};
 
 mod common;
 
@@ -33,8 +33,8 @@ async fn test_invalid_signature() -> Result<()> {
 
     loop {
         let purpose_key = purpose_keys
-            .purpose_keys_creation()
-            .create_purpose_key(identity.identifier(), Purpose::Credentials)
+            .credential_purpose_keys_creation()
+            .create_purpose_key(identity.identifier())
             .await?;
 
         let res = identities_remote

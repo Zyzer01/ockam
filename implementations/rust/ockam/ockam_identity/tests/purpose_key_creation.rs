@@ -1,6 +1,6 @@
 use ockam_core::Result;
-use ockam_identity::{identities, Purpose};
-use ockam_vault::SecretType;
+use ockam_identity::identities;
+use ockam_vault::SigningKeyType;
 
 #[tokio::test]
 async fn create_default_purpose_keys() -> Result<()> {
@@ -11,45 +11,45 @@ async fn create_default_purpose_keys() -> Result<()> {
     let identity = identities_creation.create_identity().await?;
 
     let res = purpose_keys
-        .purpose_keys_creation()
-        .get_purpose_key(identity.identifier(), Purpose::Credentials)
+        .credential_purpose_keys_creation()
+        .get_purpose_key(identity.identifier())
         .await;
     assert!(res.is_err());
     let res = purpose_keys
-        .purpose_keys_creation()
-        .get_purpose_key(identity.identifier(), Purpose::SecureChannel)
-        .await;
-    assert!(res.is_err());
-
-    let _purpose_key = purpose_keys
-        .purpose_keys_creation()
-        .create_purpose_key(identity.identifier(), Purpose::Credentials)
-        .await?;
-
-    let res = purpose_keys
-        .purpose_keys_creation()
-        .get_purpose_key(identity.identifier(), Purpose::Credentials)
-        .await;
-    assert!(res.is_ok());
-    let res = purpose_keys
-        .purpose_keys_creation()
-        .get_purpose_key(identity.identifier(), Purpose::SecureChannel)
+        .secure_channel_purpose_keys_creation()
+        .get_purpose_key(identity.identifier())
         .await;
     assert!(res.is_err());
 
     let _purpose_key = purpose_keys
-        .purpose_keys_creation()
-        .create_purpose_key(identity.identifier(), Purpose::SecureChannel)
+        .credential_purpose_keys_creation()
+        .create_purpose_key(identity.identifier())
         .await?;
 
     let res = purpose_keys
-        .purpose_keys_creation()
-        .get_purpose_key(identity.identifier(), Purpose::Credentials)
+        .credential_purpose_keys_creation()
+        .get_purpose_key(identity.identifier())
         .await;
     assert!(res.is_ok());
     let res = purpose_keys
-        .purpose_keys_creation()
-        .get_purpose_key(identity.identifier(), Purpose::SecureChannel)
+        .secure_channel_purpose_keys_creation()
+        .get_purpose_key(identity.identifier())
+        .await;
+    assert!(res.is_err());
+
+    let _purpose_key = purpose_keys
+        .secure_channel_purpose_keys_creation()
+        .create_purpose_key(identity.identifier())
+        .await?;
+
+    let res = purpose_keys
+        .credential_purpose_keys_creation()
+        .get_purpose_key(identity.identifier())
+        .await;
+    assert!(res.is_ok());
+    let res = purpose_keys
+        .secure_channel_purpose_keys_creation()
+        .get_purpose_key(identity.identifier())
         .await;
     assert!(res.is_ok());
 
@@ -65,33 +65,24 @@ async fn create_custom_type() -> Result<()> {
     let identity = identities_creation.create_identity().await?;
 
     let _purpose_key = purpose_keys
-        .purpose_keys_creation()
-        .purpose_key_builder(identity.identifier(), Purpose::Credentials)
-        .with_random_key(SecretType::NistP256)
+        .credential_purpose_keys_creation()
+        .purpose_key_builder(identity.identifier())
+        .with_random_key(SigningKeyType::ECDSASHA256CurveP256)
         .build()
         .await?;
 
     let purpose_key = purpose_keys
-        .purpose_keys_creation()
-        .get_purpose_key(identity.identifier(), Purpose::Credentials)
+        .credential_purpose_keys_creation()
+        .get_purpose_key(identity.identifier())
         .await?;
 
-    let key_id = purpose_key.key_id();
-    let stype = identities
+    let key_id = purpose_key.key();
+    let public_key = identities
         .vault()
         .credential_vault
-        .get_public_key(key_id)
-        .await?
-        .stype();
-    assert_eq!(stype, SecretType::NistP256);
-
-    let res = purpose_keys
-        .purpose_keys_creation()
-        .purpose_key_builder(identity.identifier(), Purpose::SecureChannel)
-        .with_random_key(SecretType::NistP256)
-        .build()
-        .await;
-    assert!(res.is_err());
+        .get_verifying_public_key(key_id)
+        .await?;
+    assert!(public_key.is_ecdsa_sha256_curve_p256());
 
     Ok(())
 }
@@ -104,50 +95,50 @@ async fn create_with_p256_identity() -> Result<()> {
 
     let identity = identities_creation
         .identity_builder()
-        .with_random_key(SecretType::NistP256)
+        .with_random_key(SigningKeyType::ECDSASHA256CurveP256)
         .build()
         .await?;
 
     let res = purpose_keys
-        .purpose_keys_creation()
-        .get_purpose_key(identity.identifier(), Purpose::Credentials)
+        .credential_purpose_keys_creation()
+        .get_purpose_key(identity.identifier())
         .await;
     assert!(res.is_err());
     let res = purpose_keys
-        .purpose_keys_creation()
-        .get_purpose_key(identity.identifier(), Purpose::SecureChannel)
-        .await;
-    assert!(res.is_err());
-
-    let _purpose_key = purpose_keys
-        .purpose_keys_creation()
-        .create_purpose_key(identity.identifier(), Purpose::Credentials)
-        .await?;
-
-    let res = purpose_keys
-        .purpose_keys_creation()
-        .get_purpose_key(identity.identifier(), Purpose::Credentials)
-        .await;
-    assert!(res.is_ok());
-    let res = purpose_keys
-        .purpose_keys_creation()
-        .get_purpose_key(identity.identifier(), Purpose::SecureChannel)
+        .secure_channel_purpose_keys_creation()
+        .get_purpose_key(identity.identifier())
         .await;
     assert!(res.is_err());
 
     let _purpose_key = purpose_keys
-        .purpose_keys_creation()
-        .create_purpose_key(identity.identifier(), Purpose::SecureChannel)
+        .credential_purpose_keys_creation()
+        .create_purpose_key(identity.identifier())
         .await?;
 
     let res = purpose_keys
-        .purpose_keys_creation()
-        .get_purpose_key(identity.identifier(), Purpose::Credentials)
+        .credential_purpose_keys_creation()
+        .get_purpose_key(identity.identifier())
         .await;
     assert!(res.is_ok());
     let res = purpose_keys
-        .purpose_keys_creation()
-        .get_purpose_key(identity.identifier(), Purpose::SecureChannel)
+        .secure_channel_purpose_keys_creation()
+        .get_purpose_key(identity.identifier())
+        .await;
+    assert!(res.is_err());
+
+    let _purpose_key = purpose_keys
+        .secure_channel_purpose_keys_creation()
+        .create_purpose_key(identity.identifier())
+        .await?;
+
+    let res = purpose_keys
+        .credential_purpose_keys_creation()
+        .get_purpose_key(identity.identifier())
+        .await;
+    assert!(res.is_ok());
+    let res = purpose_keys
+        .secure_channel_purpose_keys_creation()
+        .get_purpose_key(identity.identifier())
         .await;
     assert!(res.is_ok());
 
@@ -163,8 +154,8 @@ async fn create_with_rotated_identity() -> Result<()> {
     let identity = identities_creation.create_identity().await?;
 
     let _purpose_key = purpose_keys
-        .purpose_keys_creation()
-        .create_purpose_key(identity.identifier(), Purpose::Credentials)
+        .credential_purpose_keys_creation()
+        .create_purpose_key(identity.identifier())
         .await?;
 
     identities_creation
@@ -173,19 +164,19 @@ async fn create_with_rotated_identity() -> Result<()> {
 
     // We currently do not verify Purpose Keys issued by an older version of identity
     let res = purpose_keys
-        .purpose_keys_creation()
-        .get_purpose_key(identity.identifier(), Purpose::Credentials)
+        .credential_purpose_keys_creation()
+        .get_purpose_key(identity.identifier())
         .await;
     assert!(res.is_err());
 
     let _purpose_key = purpose_keys
-        .purpose_keys_creation()
-        .create_purpose_key(identity.identifier(), Purpose::Credentials)
+        .credential_purpose_keys_creation()
+        .create_purpose_key(identity.identifier())
         .await?;
 
     purpose_keys
-        .purpose_keys_creation()
-        .get_purpose_key(identity.identifier(), Purpose::Credentials)
+        .credential_purpose_keys_creation()
+        .get_purpose_key(identity.identifier())
         .await?;
 
     Ok(())
